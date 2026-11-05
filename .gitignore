@@ -1,26 +1,27 @@
-# Environment
+*.log
+.DS_Store
 .env
 .env.backup
 .env.production
-
-# Dependencies
-/backend/vendor/
-/backend/node_modules/
-
-# Database
-*.sqlite
-*.sqlite3
-
-# OS & IDE
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.log
-
-# Caches & Builds
+.phpactor.json
 .phpunit.result.cache
-/backend/public/storage
-/backend/public/build
-/backend/public/hot
-
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+Thumbs.db
