@@ -208,36 +208,37 @@ Seluruh komponen sistem dikelola dalam satu proyek Laravel yang bersih dan terst
 
 ```
 sekolahku/
+├── app/
+│   ├── Http/Controllers/      # Web Controllers & API Controllers
+│   │   ├── AdminDashboardController.php
+│   │   ├── AdminDataMasterController.php
+│   │   ├── AdminBulkImportController.php
+│   │   ├── AttendancePortalController.php
+│   │   └── Api/               # API Endpoint siap pakai untuk Mobile
+│   ├── Models/                # Eloquent ORM (Student, Teacher, Attendance, dll)
+│   └── Services/              # Logika Bisnis (Geofencing, Billing, Notifikasi)
 │
-├── backend/                       # Aplikasi Inti Laravel 13 (Full-stack)
-│   ├── app/
-│   │   ├── Http/Controllers/      # Web Controllers & API Controllers
-│   │   │   ├── AdminDashboardController.php
-│   │   │   ├── AdminDataMasterController.php
-│   │   │   ├── AttendancePortalController.php
-│   │   │   └── Api/               # API Endpoint siap pakai untuk Mobile
-│   │   ├── Models/                # Eloquent ORM (Student, Teacher, Attendance, dll)
-│   │   └── Services/              # Logika Bisnis (Geofencing, Billing, Notifikasi)
-│   │
-│   ├── database/                  # Migrasi & Seeder Data Master Dapodik
-│   │   ├── migrations/
-│   │   └── seeders/
-│   │
-│   ├── resources/
-│   │   └── views/                 # Frontend Tampilan (Laravel Blade)
-│   │       ├── layouts/
-│   │       │   └── vuexy.blade.php      # Master Theme Vuexy (Sidebar, Topbar)
-│   │       ├── admin/
-│   │       │   ├── dashboard.blade.php  # Dashboard Analitik
-│   │       │   └── data-master.blade.php# Data Master Terpadu Dapodik
-│   │       └── attendance/
-│   │           └── portal.blade.php     # Portal Presensi Kamera Selfie & GPS
-│   │
-│   ├── routes/
-│   │   ├── web.php                # Rute Halaman Web (Admin, Guru, Siswa)
-│   │   └── api.php                # Rute JSON API (Mobile App & Integrasi)
-│   │
-│   └── public/                    # Assets CSS, JS, Icon, Gambar
+├── database/                  # Migrasi & Seeder Data Master Dapodik
+│   ├── migrations/
+│   └── seeders/
+│
+├── resources/
+│   └── views/                 # Frontend Tampilan (Laravel Blade)
+│       ├── layouts/
+│       │   └── vuexy.blade.php      # Master Theme Vuexy (Sidebar, Topbar)
+│       ├── admin/
+│       │   ├── dashboard.blade.php  # Dashboard Analitik
+│       │   └── data-master.blade.php# Data Master Terpadu Dapodik
+│       └── attendance/
+│           └── portal.blade.php     # Portal Presensi Kamera Selfie & GPS
+│
+├── routes/
+│   ├── web.php                # Rute Halaman Web (Admin, Guru, Siswa)
+│   └── api.php                # Rute JSON API (Mobile App & Integrasi)
+│
+├── public/                    # Web Root Assets (CSS, JS, Icon, Gambar, Build Assets)
+├── storage/                   # File uploads, sessions, compiled views & logs
+└── artisan                    # Laravel Command-Line Tool
 ```
 
 ### 4.3 Pola Multi-Tenant Terpadu
@@ -2159,40 +2160,39 @@ Pipeline:
 
 ```
 sekolahku/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── AdminDashboardController.php    # Handler Dashboard Analitik
+│   │   │   ├── AdminDataMasterController.php   # Handler Data Master Terpadu (10 Kategori)
+│   │   │   ├── AdminBulkImportController.php   # Handler Impor Masal Siswa & GTK via Excel/CSV
+│   │   │   ├── AdminScheduleController.php     # Handler Matriks Jadwal KBM (Kelas, Guru, Ruang, Kategori & Auto-Rowspan)
+│   │   │   ├── AdminDisciplineController.php   # Handler Modul Kesiswaan: Tata Tertib, Ambang Batas & Kredit Poin
+│   │   │   ├── AdminTeachingJournalController.php # Handler KBM & Jurnal Mengajar Guru (KBM, Agenda, Verifikasi)
+│   │   │   ├── AdminUserController.php         # Handler RBAC Pengguna, Multi-Peran & Enrollment Satdik
+│   │   │   ├── TeacherProfileController.php    # Handler Profil GTK Dapodik (5 Tab, Foto 4x6, Jendela Jadwal)
+│   │   │   ├── AttendancePortalController.php  # Handler Portal Presensi GPS & Selfie
+│   │   │   ├── StudentProfileController.php    # Handler Biodata Mandiri Siswa (Dapodik & Pas Foto 4x6)
+│   │   │   └── Api/
+│   │   │       ├── ClassScheduleController.php     # CRUD Jadwal KBM, Anti-Bentrok 3 Lapis, Edit Jam & Salin Semester
+│   │   │       ├── SchoolRoomController.php        # CRUD Master Ruang Kelas, Lab & Bengkel
+│   │   │       ├── StudentDisciplineController.php # CRUD Master Kategori/Item Pelanggaran, Ambang Sanksi & Pemutihan
+│   │   │       ├── StudentPromotionController.php  # Handler Kenaikan Kelas Massal & Riwayat Rombel
+│   │   │       ├── CurriculumController.php        # CRUD Kurikulum, Jenjang, Kelompok Mapel Dinamis & Alokasi Mapel
+│   │   │       ├── VocationalSpectrumController.php # CRUD Spektrum Keahlian SMK (Bidang, Program, Konsentrasi)
+│   │   │       └── ...                             # Endpoint JSON API untuk Mobile Client
+│   │   └── Middleware/
+│   │       ├── RoleMiddleware.php              # RBAC Middleware (Role Passthrough & Waka Mapping)
+│   │       └── MultiTenantMiddleware.php       # Enforce Tenant Isolation
+│   ├── Models/                                 # 30+ Model Eloquent (User, Teacher, Curriculum, CurriculumSubjectGroup, Schedule, SchoolRoom, dll)
+│   └── Services/                               # Logika Bisnis (DisciplineBootstrapService, Geofencing, Enrollment)
 │
-├── backend/                              # Aplikasi Inti Laravel 13 (Full-Stack Monolith)
-│   ├── app/
-│   │   ├── Http/
-│   │   │   ├── Controllers/
-│   │   │   │   ├── AdminDashboardController.php    # Handler Dashboard Analitik
-│   │   │   │   ├── AdminDataMasterController.php   # Handler Data Master Terpadu (10 Kategori)
-│   │   │   │   ├── AdminScheduleController.php     # Handler Matriks Jadwal KBM (Kelas, Guru, Ruang, Kategori & Auto-Rowspan)
-│   │   │   │   ├── AdminDisciplineController.php   # Handler Modul Kesiswaan: Tata Tertib, Ambang Batas & Kredit Poin
-│   │   │   │   ├── AdminTeachingJournalController.php # Handler KBM & Jurnal Mengajar Guru (KBM, Agenda, Verifikasi)
-│   │   │   │   ├── AdminUserController.php         # Handler RBAC Pengguna, Multi-Peran & Enrollment Satdik
-│   │   │   │   ├── TeacherProfileController.php    # Handler Profil GTK Dapodik (5 Tab, Foto 4x6, Jendela Jadwal)
-│   │   │   │   ├── AttendancePortalController.php  # Handler Portal Presensi GPS & Selfie
-│   │   │   │   ├── StudentProfileController.php    # Handler Biodata Mandiri Siswa (Dapodik & Pas Foto 4x6)
-│   │   │   │   └── Api/
-│   │   │   │       ├── ClassScheduleController.php     # CRUD Jadwal KBM, Anti-Bentrok 3 Lapis, Edit Jam & Salin Semester
-│   │   │   │       ├── SchoolRoomController.php        # CRUD Master Ruang Kelas, Lab & Bengkel
-│   │   │   │       ├── StudentDisciplineController.php # CRUD Master Kategori/Item Pelanggaran, Ambang Sanksi & Pemutihan
-│   │   │   │       ├── StudentPromotionController.php  # Handler Kenaikan Kelas Massal & Riwayat Rombel
-│   │   │   │       ├── CurriculumController.php        # CRUD Kurikulum, Jenjang, Kelompok Mapel Dinamis & Alokasi Mapel
-│   │   │   │       ├── VocationalSpectrumController.php # CRUD Spektrum Keahlian SMK (Bidang, Program, Konsentrasi)
-│   │   │   │       └── ...                             # Endpoint JSON API untuk Mobile Client
-│   │   │   └── Middleware/
-│   │   │       ├── RoleMiddleware.php              # RBAC Middleware (Role Passthrough & Waka Mapping)
-│   │   │       └── MultiTenantMiddleware.php       # Enforce Tenant Isolation
-│   │   ├── Models/                                 # 30+ Model Eloquent (User, Teacher, Curriculum, CurriculumSubjectGroup, Schedule, SchoolRoom, dll)
-│   │   └── Services/                               # Logika Bisnis (DisciplineBootstrapService, Geofencing, Enrollment)
-│   │
-│   ├── database/
-│   │   ├── migrations/                             # Struktur Tabel Database Dapodik, Ruangan, Jadwal, User RBAC & GTK
-│   │   └── seeders/                                # Data Awal SMAN/SMKN 1 JKT (Spektrum SMK, Kurmer, GTK, Siswa, Tatib)
-│   │
-│   ├── resources/
-│   │   └── views/                                  # Tampilan UI (Laravel Blade)
+├── database/
+│   ├── migrations/                             # Struktur Tabel Database Dapodik, Ruangan, Jadwal, User RBAC & GTK
+│   └── seeders/                                # Data Awal SMAN/SMKN 1 JKT (Spektrum SMK, Kurmer, GTK, Siswa, Tatib)
+│
+├── resources/
+│   └── views/                                  # Tampilan UI (Laravel Blade)
 │   │       ├── layouts/
 │   │       │   └── vuexy.blade.php                 # Master Template Vuexy (Sidebar Terpadu + Grup Kesiswaan & BK)
 │   │       ├── admin/
