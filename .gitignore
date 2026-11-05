@@ -1,0 +1,25 @@
+# Environment
+.env
+.env.backup
+.env.production
+
+# Dependencies
+/backend/vendor/
+/backend/node_modules/
+
+# Database
+*.sqlite
+*.sqlite3
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# Caches & Builds
+.phpunit.result.cache
+/backend/public/storage
+/backend/public/build
+/backend/public/hot

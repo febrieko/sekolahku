@@ -1,0 +1,37 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('schools', function (Blueprint $table) {
+            $table->id();
+            $table->string('tenant_id', 50)->unique();
+            $table->string('name');
+            $table->string('npsn', 20)->nullable()->unique();
+            $table->enum('level', ['SD', 'SMP', 'SMA', 'SMK', 'PONPES'])->default('SMP');
+            $table->enum('subscription', ['starter', 'professional', 'enterprise'])->default('starter');
+            $table->text('address')->nullable();
+            $table->string('phone', 30)->nullable();
+            $table->string('email', 100)->nullable();
+            $table->string('logo_url', 500)->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('schools');
+    }
+};
