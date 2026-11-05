@@ -124,25 +124,31 @@ Institusi pendidikan di Indonesia, khususnya sekolah formal dan pondok pesantren
 
 ### 3.3 Akun Pengujian Sistem (Demo Accounts)
 
-Telah disediakan akun dummy lengkap untuk memfasilitasi pengujian alur bisnis sesuai hierarki wewenang masing-masing:
+Telah disediakan akun dummy resmi pada seeder database (`DummyUsersSeeder`) untuk memfasilitasi pengujian alur bisnis sesuai hierarki wewenang masing-masing peran. 
 
-| Peran (Role) | Penugasan (Duties) | Alamat Email | Kata Sandi | Deskripsi & Hak Akses |
-|---|---|---|---|---|
-| **Super Admin** | Pusat | `superadmin@sekolahku.id` | `password` | Manajemen tenant lintas sekolah & enrollment global |
-| **Kepala Sekolah** | Pimpinan Satdik | `kepsek@sekolahku.sch.id` | `password` | Supervisi KBM, evaluasi GTK & laporan eksekutif |
-| **Admin Sekolah** | TU Satdik | `admin@sekolahku.sch.id` | `password` | Tata kelola master sekolah, user RBAC & jendela profil |
-| **Waka Kurikulum** | Guru + Waka | `waka.kurikulum@sekolahku.sch.id` | `password` | Master kurikulum, alokasi jam & jadwal pelajaran KBM |
-| **Waka Kesiswaan** | Guru + Waka | `waka.kesiswaan@sekolahku.sch.id` | `password` | Tata tertib, kredit poin, SP1-SP3 & pemutihan poin |
-| **Waka Sarpras** | Guru + Waka | `waka.sarpras@sekolahku.sch.id` | `password` | Sarana prasarana, inventaris ruang kelas & laboratorium |
-| **Waka Humas** | Guru + Waka | `waka.humas@sekolahku.sch.id` | `password` | Kemitraan DUDI, PKL magang & kehumasan sekolah |
-| **Guru BK** | Konselor | `bk@sekolahku.sch.id` | `password` | Layanan bimbingan konseling & bina kesiswaan |
-| **Guru Reguler** | Guru Mapel | `guru@sekolahku.sch.id` | `password` | KBM, pengisian jurnal mengajar & presensi kelas |
-| **Staf TU** | Tendik | `tu@sekolahku.sch.id` | `password` | Administrasi persuratan, tata usaha & arsip |
-| **Bendahara** | Keuangan | `bendahara@sekolahku.sch.id` | `password` | Pembayaran SPP, kasir kas & penerimaan sekolah |
-| **Siswa** | Peserta Didik | `siswa@sekolahku.sch.id` | `password` | Presensi mandiri GPS selfie, jadwal KBM & profil |
-| **Orang Tua** | Wali Murid | `ortu@sekolahku.sch.id` | `password` | Notifikasi absensi anak, tagihan SPP & kartu belajar |
+> [!NOTE]
+> **Pembaruan Antarmuka Login**: Seluruh panel daftar akun demo dan tombol jalan pintas (*1-Click fast track*) pada halaman login utama (`/login`) telah dihilangkan agar halaman login tampil bersih (*clean production interface*), profesional, dan aman. Pengujian dilakukan dengan memasukkan email/NISN dan kata sandi di bawah ini secara manual.
 
-*(Halaman login utama dilengkapi tombol **Akun Demo Sekali Klik** untuk mengisi kredensial secara otomatis).*
+| No | Peran (Role RBAC) | Nama Lengkap / Entitas | Kredensial Login (Email / NISN) | Kata Sandi | Tugas Fungsional & Modul Tujuan |
+|---|---|---|---|---|---|
+| 1 | **Super Admin** (`super_admin`) | Administrator Pusat | `superadmin@sekolahku.id` | `password` | Tata kelola tenant multi-sekolah & enrollment global. |
+| 2 | **Kepala Sekolah** (`principal`) | Dr. H. Mulyadi, M.Pd. | `kepsek@sekolahku.sch.id` | `password` | Supervisi KBM, evaluasi GTK & laporan eksekutif sekolah. |
+| 3 | **Admin Sekolah** (`school_admin`) | Administrator Sekolah (TU) | `admin@sekolahku.sch.id` | `password` | Pengelolaan data master, direktori pengguna, impor masal, dan jendela edit profil. |
+| 4 | **Waka Kurikulum** (`teacher` + `waka_kurikulum`) | Dra. Hj. Nurhayati, M.Pd. | `waka.kurikulum@sekolahku.sch.id` | `password` | Master kurikulum, kelompok mapel, alokasi JP, dan manajemen jadwal pelajaran KBM. |
+| 5 | **Waka Kesiswaan** (`teacher` + `waka_kesiswaan`) | Drs. Agus Setiawan, M.Pd. | `waka.kesiswaan@sekolahku.sch.id` | `password` | Tata tertib, master pelanggaran, ambang batas sanksi SP, dan pemutihan poin siswa. |
+| 6 | **Waka Sarpras** (`teacher` + `waka_sarpras`) | Ir. H. Budi Santoso, M.T. | `waka.sarpras@sekolahku.sch.id` | `password` | Inventaris sarana prasarana, master ruangan kelas, laboratorium & bengkel. |
+| 7 | **Waka Humas / Hubin** (`teacher` + `waka_humas`) | Siti Rahmawati, S.Pd., M.M. | `waka.humas@sekolahku.sch.id` | `password` | Kemitraan industri DUDI, program magang PKL, dan publikasi kehumasan. |
+| 8 | **Guru BK / Konselor** (`counselor`) | Dra. Hj. Endang Purwanti, M.Psi. | `bk@sekolahku.sch.id` | `password` | Buku kredit poin kedisiplinan, riwayat konseling, dan pembinaan kesiswaan. |
+| 9 | **Guru / Pendidik** (`teacher`) | Drs. Bambang Sudarsono, M.Pd. | `guru@sekolahku.sch.id` | `password` | Jadwal mengajar personal, jurnal KBM harian, dan absensi pertemuan kelas. |
+| 10 | **Staf TU / Tendik** (`staff`) | Rudi Hermawan, S.Kom. | `tu@sekolahku.sch.id` | `password` | Administrasi persuratan, kearsipan sekolah, dan pelayanan umum tata usaha. |
+| 11 | **Bendahara / Keuangan** (`treasurer`) | Hj. Ratna Sari, S.E. | `bendahara@sekolahku.sch.id` | `password` | Tagihan SPP/DSP, pencatatan kasir multi-metode, rekap VA/QRIS, dan buku kas. |
+| 12 | **Orang Tua / Wali** (`parent`) | H. Hendra Wijaya | `ortu@sekolahku.sch.id` | `password` | Portal presensi anak, notifikasi absensi real-time, dan informasi tagihan SPP. |
+| 13 | **Peserta Didik (Siswa 1)** (`student`) | Ahmad Fauzi (X-MIPA-1) | `siswa@sekolahku.sch.id`<br>atau **NISN:** `0081234561` | `password` | Dashboard siswa, jadwal KBM, absensi swafoto selfie GPS, kartu pelajar, profil & poin tatib. |
+| 14 | **Peserta Didik (Siswa 2)** (`student`) | Siti Aisyah (X-MIPA-1) | `siti.aisyah@sekolahku.sch.id`<br>atau **NISN:** `0081234562` | `password` | Dashboard siswa, presensi GPS, jadwal pelajaran, dan riwayat presensi mandiri. |
+
+> **Catatan Kata Sandi Akun Baru dari Impor Excel**:  
+> - Siswa baru hasil impor masal Excel: default password `Siswa123!` (jika kolom kata sandi tidak diisi).
+> - GTK baru hasil impor masal Excel: default password `Guru123!` (jika kolom kata sandi tidak diisi).
 
 ---
 

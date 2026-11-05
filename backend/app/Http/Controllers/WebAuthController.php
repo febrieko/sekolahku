@@ -27,96 +27,9 @@ class WebAuthController extends Controller
         }
 
         $school = School::where('tenant_id', 'sman1jkt')->first() ?? School::first();
-        $demoStudentUser = \App\Models\User::where('role', 'student')->where('is_active', true)->orderBy('id')->first();
-        $demoStudentEmail = $demoStudentUser?->email ?? 'siswa@sekolahku.sch.id';
-        $demoStudentName = $demoStudentUser?->name ? ($demoStudentUser->name . ' (Siswa Aktif)') : 'Ahmad Fauzi (X-MIPA-1)';
-
-        $demoAccounts = [
-            [
-                'role_label' => 'Admin Sekolah',
-                'badge' => 'badge-primary',
-                'icon' => 'bx-shield-quarter',
-                'name' => 'Administrator Sekolah',
-                'email' => 'admin@sekolahku.sch.id',
-                'password' => 'password',
-                'desc' => 'Akses penuh kelola master data, guru, siswa & dashboard',
-                'destination' => 'Dashboard Admin',
-            ],
-            [
-                'role_label' => 'Waka Kurikulum',
-                'badge' => 'badge-info',
-                'icon' => 'bxs-book-bookmark',
-                'name' => 'Dra. Hj. Nurhayati, M.Pd.',
-                'email' => 'waka.kurikulum@sekolahku.sch.id',
-                'password' => 'password',
-                'desc' => 'Tupoksi: Kelola kurikulum, mapel, jadwal KBM & tahun ajaran',
-                'destination' => 'Dashboard Kurikulum',
-            ],
-            [
-                'role_label' => 'Waka Kesiswaan',
-                'badge' => 'badge-warning',
-                'icon' => 'bxs-user-badge',
-                'name' => 'Drs. Agus Setiawan, M.Pd.',
-                'email' => 'waka.kesiswaan@sekolahku.sch.id',
-                'password' => 'password',
-                'desc' => 'Tupoksi: Kelola peserta didik, ortu, rombel & presensi siswa',
-                'destination' => 'Dashboard Kesiswaan',
-            ],
-            [
-                'role_label' => 'Waka Sarpras',
-                'badge' => 'badge-secondary',
-                'icon' => 'bxs-building-house',
-                'name' => 'Ir. H. Budi Santoso, M.T.',
-                'email' => 'waka.sarpras@sekolahku.sch.id',
-                'password' => 'password',
-                'desc' => 'Tupoksi: Inventaris sarpras, ketersediaan ruang kelas & lab/bengkel',
-                'destination' => 'Dashboard Sarpras',
-            ],
-            [
-                'role_label' => 'Waka Humas / Hubin',
-                'badge' => 'badge-dark',
-                'icon' => 'bxs-briefcase-alt-2',
-                'name' => 'Siti Rahmawati, S.Pd., M.M.',
-                'email' => 'waka.humas@sekolahku.sch.id',
-                'password' => 'password',
-                'desc' => 'Tupoksi: Kemitraan DUDI/Industri, PKL/magang & publikasi sekolah',
-                'destination' => 'Dashboard Humas/Hubin',
-            ],
-            [
-                'role_label' => 'Guru / Pendidik',
-                'badge' => 'badge-success',
-                'icon' => 'bxs-chalkboard',
-                'name' => 'Drs. Bambang Sudarsono, M.Pd.',
-                'email' => 'guru@sekolahku.sch.id',
-                'password' => 'password',
-                'desc' => 'Akses jadwal mengajar, rekap presensi kelas & nilai',
-                'destination' => 'Dashboard Guru',
-            ],
-            [
-                'role_label' => 'Orang Tua / Wali',
-                'badge' => 'badge-warning',
-                'icon' => 'bxs-group',
-                'name' => 'H. Hendra Wijaya',
-                'email' => 'ortu@sekolahku.sch.id',
-                'password' => 'password',
-                'desc' => 'Pantau absensi anak, riwayat kehadiran & tagihan SPP',
-                'destination' => 'Portal Presensi / Wali',
-            ],
-            [
-                'role_label' => 'Siswa / Murid',
-                'badge' => 'badge-info',
-                'icon' => 'bxs-user-detail',
-                'name' => $demoStudentName,
-                'email' => $demoStudentEmail,
-                'password' => 'password',
-                'desc' => 'Dashboard siswa, jadwal personal, presensi GPS, poin tatib & kartu pelajar',
-                'destination' => 'Dashboard Portal Siswa',
-            ],
-        ];
 
         return view('auth.login', [
             'school' => $school,
-            'demoAccounts' => $demoAccounts,
         ]);
     }
 
