@@ -18,6 +18,20 @@ class DummyUsersSeeder extends Seeder
         $schoolId = $school ? $school->id : 1;
         $defaultPassword = Hash::make('password');
 
+        // 0. Super Admin (Platform Owner / Multi-Tenant SaaS Administrator)
+        User::updateOrCreate(
+            ['email' => 'superadmin@sekolahku.id'],
+            [
+                'name' => 'Super Administrator SaaS',
+                'password' => $defaultPassword,
+                'role' => 'super_admin',
+                'additional_role' => null,
+                'school_id' => $schoolId,
+                'phone' => '081100000001',
+                'is_active' => true,
+            ]
+        );
+
         // 1. Admin Sekolah (School Administrator - TU)
         $admin = User::updateOrCreate(
             ['email' => 'admin@sekolahku.sch.id'],
