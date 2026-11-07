@@ -9,9 +9,8 @@ use App\Models\SchoolGeofence;
 use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
-
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class AttendancePortalController extends Controller
 {
@@ -20,13 +19,18 @@ class AttendancePortalController extends Controller
      */
     public function index(Request $request): View
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
         $isStudent = $user && $user->role === 'student';
+        $isSuperAdmin = $user && $user->isSuperAdmin();
+        $isSchoolAdmin = $user && $user->isSchoolAdmin();
+        $canManageGeofence = $isSuperAdmin || $isSchoolAdmin;
 
         $currentStudent = null;
         $todayAttendance = null;
         $myAttendances = collect();
         $studentStats = null;
+        $availableSchools = collect();
 
         if ($isStudent) {
             // 1. Identifikasi siswa dari akun login
@@ -79,49 +83,73 @@ class AttendancePortalController extends Controller
             } else {
                 $school = School::where('tenant_id', 'sman1jkt')->first() ?? School::first();
             }
+        } elseif ($isSchoolAdmin) {
+            // 2. Admin Sekolah: Kunci mutlak ke satuan pendidikan tempat ia dienrol
+            if (! $user->school_id) {
+                abort(403, 'Akses Ditolak: Akun Admin Sekolah Anda belum dienrol ke Satuan Pendidikan manapun. Silakan hubungi Super Administrator.');
+            }
+            $school = School::find($user->school_id);
+            if (! $school) {
+                abort(404, 'Satuan pendidikan tempat akun Anda dienrol tidak ditemukan.');
+            }
+            $availableSchools = collect([$school]);
+        } elseif ($isSuperAdmin) {
+            // 3. Super Admin: Bebas memilih dan mengelola seluruh satuan pendidikan
+            $availableSchools = School::orderBy('name')->get();
+
+            if ($request->has('school_id')) {
+                $requestedSchool = School::find($request->query('school_id'));
+                if ($requestedSchool) {
+                    $school = $requestedSchool;
+                    session(['active_school_id' => $requestedSchool->id]);
+                } else {
+                    $school = $this->resolveSchool($request);
+                }
+            } else {
+                $school = $this->resolveSchool($request);
+            }
         } else {
-            // Guru, Admin, atau mode pengujian
-            $school = ($user && $user->school_id ? School::find($user->school_id) : null)
-                ?? School::where('tenant_id', 'sman1jkt')->first()
-                ?? School::whereHas('students')->first()
-                ?? School::first();
+            // 4. Guru, Staf, atau Mode Pratinjau
+            if ($user && $user->school_id) {
+                $school = School::find($user->school_id) ?? $this->resolveSchool($request);
+            } else {
+                $school = $this->resolveSchool($request);
+            }
+            $availableSchools = $school ? collect([$school]) : collect();
         }
 
         $schoolId = $school ? $school->id : 1;
 
+        // Ambil titik geofence KHUSUS untuk sekolah ini (tanpa fallback lintas tenant)
         $geofences = SchoolGeofence::where('school_id', $schoolId)
             ->where('is_active', true)
             ->orderByDesc('is_primary')
             ->get();
 
-        // Fallback jika sekolah belum punya geofence sendiri
-        if ($geofences->isEmpty()) {
-            $geofences = SchoolGeofence::where('is_active', true)->orderByDesc('is_primary')->get();
-        }
-
         $primaryGeofence = $geofences->firstWhere('is_primary', true) ?? $geofences->first();
 
+        // Ambil kelas hanya milik sekolah ini
         $classes = SchoolClass::where('school_id', $schoolId)
             ->where('is_active', true)
             ->orderBy('grade_level')
             ->orderBy('name')
             ->get();
 
+        // Ambil daftar siswa hanya milik sekolah ini
         $students = Student::with('schoolClass')
             ->where('school_id', $schoolId)
             ->where('status', 'active')
             ->orderBy('full_name')
             ->get();
 
-        // Jika daftar siswa di sekolah kosong, fallback ke seluruh siswa aktif
-        if ($students->isEmpty()) {
-            $students = Student::with('schoolClass')->where('status', 'active')->orderBy('full_name')->get();
-        }
-
         return view('attendance.portal', [
             'school' => $school,
             'user' => $user,
             'isStudent' => $isStudent,
+            'isSuperAdmin' => $isSuperAdmin,
+            'isSchoolAdmin' => $isSchoolAdmin,
+            'canManageGeofence' => $canManageGeofence,
+            'availableSchools' => $availableSchools,
             'currentStudent' => $currentStudent,
             'todayAttendance' => $todayAttendance,
             'myAttendances' => $myAttendances,

@@ -65,3 +65,4 @@ class AppSetting extends Model
         Cache::forget('app_setting_app_logo');
     }
 }
+

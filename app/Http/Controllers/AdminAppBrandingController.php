@@ -103,3 +103,4 @@ class AdminAppBrandingController extends Controller
             ->with('success', 'Pengaturan branding berhasil dikembalikan ke standar awal sistem.');
     }
 }
+

@@ -19,12 +19,27 @@ class AttendanceController extends Controller
     ) {}
 
     /**
+     * Resolve authorized school_id for attendance APIs.
+     * Super Admin can query any school; Non-Super Admin is strictly locked to their enrolled school_id.
+     */
+    protected function getAuthorizedSchoolId(Request $request): int
+    {
+        $user = \Illuminate\Support\Facades\Auth::user() ?? $request->user();
+
+        if ($user && ! $user->isSuperAdmin()) {
+            return (int) ($user->school_id ?? 1);
+        }
+
+        return (int) ($request->query('school_id') ?? session('active_school_id') ?? ($user?->school_id ?? 1));
+    }
+
+    /**
      * Display a listing of attendances with filters and pagination.
      */
     public function index(Request $request): JsonResponse
     {
-        $schoolId = $request->query('school_id', $request->user()?->school_id ?? 1);
-        $user = $request->user();
+        $schoolId = $this->getAuthorizedSchoolId($request);
+        $user = \Illuminate\Support\Facades\Auth::user() ?? $request->user();
         $studentId = $request->query('student_id');
 
         $date = $request->query('date', Carbon::today()->toDateString());
@@ -304,6 +319,16 @@ class AttendanceController extends Controller
 
         $student = Student::findOrFail($validated['student_id']);
 
+        $user = \Illuminate\Support\Facades\Auth::user() ?? $request->user();
+        if ($user && ! $user->isSuperAdmin()) {
+            if ((int) $student->school_id !== (int) $user->school_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses ditolak: Anda hanya berwenang mencatat presensi untuk siswa pada satuan pendidikan yang telah dienrol.',
+                ], 403);
+            }
+        }
+
         $attendance = Attendance::where('school_id', $student->school_id)
             ->where('student_id', $student->id)
             ->whereDate('date', $validated['date'])
@@ -401,7 +426,7 @@ class AttendanceController extends Controller
      */
     public function todaySummary(Request $request): JsonResponse
     {
-        $schoolId = $request->query('school_id', $request->user()?->school_id ?? 1);
+        $schoolId = $this->getAuthorizedSchoolId($request);
         $date = $request->query('date', Carbon::today()->toDateString());
 
         $totalStudents = Student::where('school_id', $schoolId)
@@ -447,7 +472,7 @@ class AttendanceController extends Controller
      */
     public function mapData(Request $request): JsonResponse
     {
-        $schoolId = $request->query('school_id', $request->user()?->school_id ?? 1);
+        $schoolId = $this->getAuthorizedSchoolId($request);
         $date = $request->query('date', Carbon::today()->toDateString());
 
         $attendances = Attendance::with(['student.schoolClass'])
@@ -483,7 +508,7 @@ class AttendanceController extends Controller
      */
     public function report(Request $request): JsonResponse
     {
-        $schoolId = $request->query('school_id', $request->user()?->school_id ?? 1);
+        $schoolId = $this->getAuthorizedSchoolId($request);
         $month = (int) $request->query('month', Carbon::now()->month);
         $year = (int) $request->query('year', Carbon::now()->year);
         $classId = $request->query('class_id');

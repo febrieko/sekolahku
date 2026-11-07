@@ -1098,11 +1098,15 @@
                 <!-- Brand Cluster -->
                 <a href="{{ route('home') }}" class="brand-cluster">
                     <div class="brand-icon">
-                        <i class='bx bxs-graduation'></i>
+                        @if(!empty($appBranding['app_logo']))
+                            <img src="{{ $appBranding['app_logo'] }}" alt="{{ $appBranding['app_name'] ?? 'Sekolahku' }}" style="width: 100%; height: 100%; object-fit: contain; border-radius: inherit;">
+                        @else
+                            <i class='bx bxs-graduation'></i>
+                        @endif
                     </div>
                     <div class="brand-meta">
                         <h1>
-                            Sekolahku
+                            {{ $appBranding['app_name'] ?? 'Sekolahku' }}
                             <span class="brand-badge">Modul Presensi Siswa & GPS</span>
                         </h1>
                         <p>{{ $school->name ?? 'SMA Negeri 1 Jakarta' }} • Tenant: <strong>{{ $school->tenant_id ?? 'sman1jkt' }}</strong></p>
@@ -1111,6 +1115,25 @@
 
                 <!-- Meta & User Actions -->
                 <div class="header-actions">
+                    @if($isSuperAdmin && $availableSchools->count() > 1)
+                        <div class="meta-pill" style="gap: 8px; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08);">
+                            <i class='bx bx-crown' style="color: #d97706; font-size: 16px;"></i>
+                            <span style="font-size: 11px; font-weight: 700; color: #b45309;">Sekolah:</span>
+                            <select id="switchSchoolSelect" onchange="window.location.href='?school_id=' + this.value" style="border: none; background: transparent; font-size: 12px; font-weight: 800; color: var(--text-heading); cursor: pointer; outline: none;">
+                                @foreach($availableSchools as $sc)
+                                    <option value="{{ $sc->id }}" {{ $sc->id == $school->id ? 'selected' : '' }}>
+                                        {{ $sc->name }} ({{ $sc->level ?? 'Unit' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @elseif($isSchoolAdmin)
+                        <div class="meta-pill" style="gap: 6px; border-color: rgba(70, 128, 255, 0.35); background: var(--vx-primary-light);">
+                            <i class='bx bx-buildings' style="color: var(--bento-primary); font-size: 16px;"></i>
+                            <span style="font-size: 11px; font-weight: 700; color: var(--bento-primary);">Enrol: {{ $school->name }}</span>
+                        </div>
+                    @endif
+
                     <div class="meta-pill">
                         <i class='bx bx-calendar'></i>
                         <span>{{ $todayDate }}</span>
@@ -1182,9 +1205,11 @@
                 <button class="tab-btn" onclick="switchTab('map-tab')">
                     <i class='bx bx-map-pin'></i> Peta Sebaran GPS Live
                 </button>
+                @if($canManageGeofence)
                 <button class="tab-btn" onclick="switchTab('geofence-tab')">
                     <i class='bx bx-target-lock'></i> Konfigurasi Geofencing
                 </button>
+                @endif
             @endif
         </div>
     </nav>
@@ -1690,6 +1715,7 @@
             </div>
         </div>
 
+        @if($canManageGeofence)
         <!-- ========================================== -->
         <!-- TAB 4: KONFIGURASI GEOFENCING              -->
         <!-- ========================================== -->
@@ -1697,9 +1723,19 @@
             <div class="selfie-layout">
                 <div class="card">
                     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2 class="card-title">
-                            <i class='bx bx-target-lock'></i> <span id="geofenceFormTitle">Tambah Titik Geofence</span>
-                        </h2>
+                        <div>
+                            <h2 class="card-title">
+                                <i class='bx bx-target-lock'></i> <span id="geofenceFormTitle">Tambah Titik Geofence</span>
+                            </h2>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">
+                                Satuan Pendidikan: <strong>{{ $school->name }}</strong>
+                                @if($isSuperAdmin)
+                                    <span class="brand-badge" style="margin-left: 4px; background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">Super Admin (Semua Sekolah)</span>
+                                @elseif($isSchoolAdmin)
+                                    <span class="brand-badge" style="margin-left: 4px; background: rgba(70, 128, 255, 0.12); color: var(--bento-primary); border: 1px solid rgba(70, 128, 255, 0.25);">Enrolled Admin</span>
+                                @endif
+                            </div>
+                        </div>
                         <span id="geofenceEditBadge" style="display: none; background: rgba(70, 128, 255, 0.12); color: var(--bento-primary); font-size: 11px; padding: 3px 8px; border-radius: 999px; font-weight: 700; border: 1px solid rgba(70, 128, 255, 0.25);">
                             <i class='bx bx-edit-alt'></i> Mode Edit
                         </span>
@@ -1830,6 +1866,7 @@
                 </div>
             </div>
         </div>
+        @endif
         @endif
 
     </main>
