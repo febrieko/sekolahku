@@ -281,7 +281,7 @@
                 <i class='bx bxs-graduation'></i>
             </div>
             <div>
-                <span class="brand-title-apex">{{ $school->name ?? 'Sekolahku' }}</span>
+                <span class="brand-title-apex">Sekolahku</span>
             </div>
         </a>
 
@@ -336,7 +336,7 @@
         </form>
 
         <div class="auth-footer-tag">
-            <span>&copy; {{ date('Y') }} {{ $school->name ?? 'Sekolahku' }}</span>
+            <span>&copy; {{ date('Y') }} Sekolahku</span>
             <span>Sistem Informasi Manajemen Sekolah Terintegrasi</span>
         </div>
     </div>
