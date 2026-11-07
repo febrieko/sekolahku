@@ -839,6 +839,46 @@
             width: 100%;
         }
 
+        .btn-action-edit {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: var(--radius-sm, 6px);
+            border: 1px solid var(--border-color);
+            background: var(--bg-surface);
+            color: var(--text-heading);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-action-edit:hover {
+            border-color: var(--bento-primary);
+            color: var(--bento-primary);
+            background: var(--vx-primary-light);
+        }
+
+        .btn-action-delete {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: var(--radius-sm, 6px);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            background: rgba(239, 68, 68, 0.05);
+            color: #ef4444;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-action-delete:hover {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #ef4444;
+        }
+
         .pulse-button {
             animation: pulsePrimary 2.2s infinite;
         }
@@ -1656,10 +1696,13 @@
         <div id="geofence-tab" class="tab-content">
             <div class="selfie-layout">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <h2 class="card-title">
-                            <i class='bx bx-target-lock'></i> Tambah / Edit Titik Geofence
+                            <i class='bx bx-target-lock'></i> <span id="geofenceFormTitle">Tambah Titik Geofence</span>
                         </h2>
+                        <span id="geofenceEditBadge" style="display: none; background: rgba(70, 128, 255, 0.12); color: var(--bento-primary); font-size: 11px; padding: 3px 8px; border-radius: 999px; font-weight: 700; border: 1px solid rgba(70, 128, 255, 0.25);">
+                            <i class='bx bx-edit-alt'></i> Mode Edit
+                        </span>
                     </div>
 
                     <form id="geofenceForm" onsubmit="saveGeofence(event)">
@@ -1693,38 +1736,57 @@
                             <input type="text" id="geoWifi" class="form-input" placeholder="Mis: SMAN1_WIFI">
                         </div>
 
-                        <div style="display: flex; gap: 12px; margin-top: 20px;">
-                            <button type="submit" class="btn btn-primary btn-block">
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-heading);">
+                                <input type="checkbox" id="geoIsPrimary" value="1">
+                                <span>Jadikan sebagai Titik Utama (Pusat Kampus)</span>
+                            </label>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="submit" id="btnSaveGeofence" class="btn btn-primary" style="flex: 1;">
                                 <i class='bx bx-save'></i> Simpan Titik Geofence
+                            </button>
+                            <button type="button" id="btnCancelEditGeofence" onclick="cancelEditGeofence()" class="btn btn-outline" style="display: none;">
+                                <i class='bx bx-x'></i> Batal
                             </button>
                         </div>
                     </form>
                 </div>
 
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <h2 class="card-title">
                             <i class='bx bx-list-ul'></i> Daftar Titik Geofence Aktif
                         </h2>
+                        <span style="font-size: 12px; color: var(--text-muted);">
+                            Total: <strong>{{ count($geofences) }} Lokasi</strong>
+                        </span>
                     </div>
 
                     <div class="table-responsive">
-                        <table class="data-table">
+                        <table class="data-table" id="geofenceTable">
                             <thead>
                                 <tr>
                                     <th>Nama Lokasi</th>
                                     <th>Koordinat</th>
                                     <th>Radius</th>
                                     <th>Status</th>
+                                    <th style="text-align: center; width: 150px;">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach($geofences as $g)
-                                    <tr>
+                            <tbody id="geofenceTableBody">
+                                @forelse($geofences as $g)
+                                    <tr id="geofence-row-{{ $g->id }}">
                                         <td>
                                             <strong>{{ $g->name }}</strong>
                                             @if($g->is_primary)
                                                 <span class="brand-badge" style="margin-left: 6px;">Utama</span>
+                                            @endif
+                                            @if(!empty($g->wifi_ssid))
+                                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                                                    <i class='bx bx-wifi'></i> {{ $g->wifi_ssid }}
+                                                </div>
                                             @endif
                                         </td>
                                         <td style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">
@@ -1732,10 +1794,36 @@
                                         </td>
                                         <td style="font-family: 'JetBrains Mono', monospace;"><strong>{{ $g->radius_meters }}m</strong></td>
                                         <td>
-                                            <span class="status-badge present"><i class='bx bx-check'></i> Aktif</span>
+                                            @if($g->is_active)
+                                                <span class="status-badge present"><i class='bx bx-check'></i> Aktif</span>
+                                            @else
+                                                <span class="status-badge absent"><i class='bx bx-x'></i> Nonaktif</span>
+                                            @endif
+                                        </td>
+                                        <td style="text-align: center; white-space: nowrap;">
+                                            <div style="display: inline-flex; gap: 6px;">
+                                                <button type="button" 
+                                                    class="btn-action-edit" 
+                                                    title="Edit Titik Geofence"
+                                                    onclick='editGeofence(@json($g))'>
+                                                    <i class='bx bx-edit'></i> Edit
+                                                </button>
+                                                <button type="button" 
+                                                    class="btn-action-delete" 
+                                                    title="Hapus Titik Geofence"
+                                                    onclick="deleteGeofence({{ $g->id }}, '{{ addslashes($g->name) }}')">
+                                                    <i class='bx bx-trash'></i> Hapus
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr id="geofenceEmptyRow">
+                                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                            Belum ada titik geofence yang dikonfigurasi.
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -2436,34 +2524,151 @@
             }
         }
 
-        // Geofence Form
+        // Geofence Form: Save / Update
         async function saveGeofence(e) {
             e.preventDefault();
+            const geoId = document.getElementById('geoId').value;
+            const isEdit = !!geoId;
+            const btnSave = document.getElementById('btnSaveGeofence');
+            const originalBtnHtml = btnSave.innerHTML;
+            btnSave.disabled = true;
+            btnSave.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Menyimpan...";
+
             const payload = {
-                school_id: SCHOOL_ID,
-                name: document.getElementById('geoName').value,
+                school_id: parseInt(document.getElementById('geoSchoolId').value) || SCHOOL_ID,
+                name: document.getElementById('geoName').value.trim(),
                 latitude: parseFloat(document.getElementById('geoLat').value),
                 longitude: parseFloat(document.getElementById('geoLng').value),
                 radius_meters: parseInt(document.getElementById('geoRadius').value),
-                wifi_ssid: document.getElementById('geoWifi').value
+                wifi_ssid: document.getElementById('geoWifi').value.trim() || null,
+                is_primary: document.getElementById('geoIsPrimary') ? document.getElementById('geoIsPrimary').checked : false
             };
 
+            const url = isEdit ? `/api/v1/geofences/${geoId}` : '/api/v1/geofences';
+            const method = isEdit ? 'PUT' : 'POST';
+
             try {
-                const res = await fetch('/api/v1/geofences', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
                     body: JSON.stringify(payload)
                 });
 
                 const data = await res.json();
                 if (data.success) {
-                    showToast("Titik Geofence berhasil ditambahkan!", "success");
-                    setTimeout(() => location.reload(), 1000);
+                    showToast(isEdit ? "Titik geofence berhasil diperbarui!" : "Titik geofence berhasil ditambahkan!", "success");
+                    setTimeout(() => location.reload(), 800);
                 } else {
-                    showToast(data.message || "Gagal menyimpan geofence", "error");
+                    showToast(data.message || (isEdit ? "Gagal memperbarui geofence" : "Gagal menyimpan geofence"), "error");
+                    btnSave.disabled = false;
+                    btnSave.innerHTML = originalBtnHtml;
                 }
             } catch (err) {
-                showToast("Kesalahan server", "error");
+                showToast("Terjadi kesalahan koneksi server", "error");
+                btnSave.disabled = false;
+                btnSave.innerHTML = originalBtnHtml;
+            }
+        }
+
+        // Edit Geofence Fill
+        function editGeofence(geo) {
+            if (typeof geo === 'string') {
+                try { geo = JSON.parse(geo); } catch(e) {}
+            }
+            if (!geo) return;
+
+            document.getElementById('geoId').value = geo.id;
+            document.getElementById('geoSchoolId').value = geo.school_id || SCHOOL_ID;
+            document.getElementById('geoName').value = geo.name || '';
+            document.getElementById('geoLat').value = geo.latitude || '';
+            document.getElementById('geoLng').value = geo.longitude || '';
+            document.getElementById('geoRadius').value = geo.radius_meters || 150;
+            document.getElementById('geoWifi').value = geo.wifi_ssid || '';
+            if (document.getElementById('geoIsPrimary')) {
+                document.getElementById('geoIsPrimary').checked = !!geo.is_primary;
+            }
+
+            const titleEl = document.getElementById('geofenceFormTitle');
+            if (titleEl) titleEl.textContent = 'Edit Titik Geofence: ' + (geo.name || '');
+            const badgeEl = document.getElementById('geofenceEditBadge');
+            if (badgeEl) badgeEl.style.display = 'inline-block';
+            
+            const btnSave = document.getElementById('btnSaveGeofence');
+            if (btnSave) {
+                btnSave.innerHTML = "<i class='bx bx-check'></i> Perbarui Titik Geofence";
+                btnSave.style.background = '#10b981';
+                btnSave.style.color = '#ffffff';
+            }
+            const btnCancel = document.getElementById('btnCancelEditGeofence');
+            if (btnCancel) btnCancel.style.display = 'inline-flex';
+
+            const formCard = document.getElementById('geofenceForm');
+            if (formCard) {
+                formCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            showToast("Mode edit aktif: " + (geo.name || ''), "info");
+        }
+
+        // Cancel Edit
+        function cancelEditGeofence() {
+            document.getElementById('geofenceForm').reset();
+            document.getElementById('geoId').value = '';
+            document.getElementById('geoSchoolId').value = SCHOOL_ID;
+
+            const titleEl = document.getElementById('geofenceFormTitle');
+            if (titleEl) titleEl.textContent = 'Tambah Titik Geofence';
+            const badgeEl = document.getElementById('geofenceEditBadge');
+            if (badgeEl) badgeEl.style.display = 'none';
+
+            const btnSave = document.getElementById('btnSaveGeofence');
+            if (btnSave) {
+                btnSave.innerHTML = "<i class='bx bx-save'></i> Simpan Titik Geofence";
+                btnSave.style.background = '';
+                btnSave.style.color = '';
+            }
+            const btnCancel = document.getElementById('btnCancelEditGeofence');
+            if (btnCancel) btnCancel.style.display = 'none';
+        }
+
+        // Delete Geofence
+        async function deleteGeofence(id, name) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus titik geofence "${name}"?\nSiswa tidak lagi dapat melakukan absensi pada koordinat radius ini.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/v1/geofences/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || "Titik geofence berhasil dihapus!", "success");
+                    const row = document.getElementById(`geofence-row-${id}`);
+                    if (row) {
+                        row.style.transition = 'all 0.3s ease';
+                        row.style.opacity = '0';
+                        row.style.background = 'rgba(239, 68, 68, 0.1)';
+                        setTimeout(() => row.remove(), 300);
+                    } else {
+                        setTimeout(() => location.reload(), 800);
+                    }
+                    if (document.getElementById('geoId').value == id) {
+                        cancelEditGeofence();
+                    }
+                } else {
+                    showToast(data.message || "Gagal menghapus titik geofence", "error");
+                }
+            } catch (err) {
+                showToast("Kesalahan server saat menghapus geofence", "error");
             }
         }
 
