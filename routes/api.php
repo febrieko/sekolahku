@@ -58,6 +58,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/schools', [SchoolController::class, 'store']);
     Route::get('/schools/{id}', [SchoolController::class, 'show']);
     Route::put('/schools/{id}', [SchoolController::class, 'update']);
+    Route::delete('/schools/{id}', [SchoolController::class, 'destroy']);
     Route::post('/schools/switch-active', [SchoolController::class, 'switchActive']);
     Route::get('/schools/{id}/profile-edit-window', [SchoolController::class, 'getProfileEditWindow']);
     Route::post('/schools/{id}/profile-edit-window', [SchoolController::class, 'updateProfileEditWindow']);

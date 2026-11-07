@@ -372,9 +372,14 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="openModalEditSchool({{ $school->id }})" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                            <i class='bx bx-edit-alt'></i> Edit Profil Sekolah
+                        </button>
+                        @if(Auth::user()->isSuperAdmin())
                         <button class="btn btn-primary" onclick="openModal('modalAddSchool')">
                             <i class='bx bx-plus-circle'></i> Tambah Satuan Pendidikan Baru
                         </button>
+                        @endif
                     </div>
                 </div>
 
@@ -523,9 +528,11 @@
                     <p>Pilih sekolah untuk beralih instansi dan mengelola data master masing-masing jenjang.</p>
                 </div>
                 <div class="panel-toolbar">
+                    @if(Auth::user()->isSuperAdmin())
                     <button class="btn btn-primary btn-sm" onclick="openModal('modalAddSchool')">
                         <i class='bx bx-plus'></i> Tambah Satuan Pendidikan
                     </button>
+                    @endif
                 </div>
             </div>
             <div class="table-wrap">
@@ -582,16 +589,28 @@
                                             {{ $item->classes_count ?? 0 }} Rombel &bull; {{ $item->students_count ?? 0 }} Siswa
                                         </span>
                                     </td>
-                                    <td style="text-align: right;">
-                                        @if(($school->id ?? 1) == $item->id)
-                                            <span class="vx-badge badge-success" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;">
-                                                <i class='bx bx-check-circle'></i> Sedang Aktif
-                                            </span>
-                                        @else
-                                            <a href="{{ route('admin.switch-school.get', $item->id) }}" class="btn btn-sm btn-primary-light">
-                                                <i class='bx bx-sync'></i> Beralih ke Sekolah Ini
-                                            </a>
-                                        @endif
+                                    <td style="text-align: right; white-space: nowrap;">
+                                        <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end;">
+                                            @if(($school->id ?? 1) == $item->id)
+                                                <span class="vx-badge badge-success" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;">
+                                                    <i class='bx bx-check-circle'></i> Aktif
+                                                </span>
+                                            @elseif(Auth::user()->isSuperAdmin())
+                                                <a href="{{ route('admin.switch-school.get', $item->id) }}" class="btn btn-sm btn-primary-light" title="Beralih ke sekolah ini">
+                                                    <i class='bx bx-sync'></i> Beralih
+                                                </a>
+                                            @endif
+
+                                            <button type="button" class="btn btn-sm btn-outline" onclick="openModalEditSchool({{ $item->id }})" title="Edit Satuan Pendidikan">
+                                                <i class='bx bx-edit-alt'></i> Edit
+                                            </button>
+
+                                            @if(Auth::user()->isSuperAdmin() && isset($availableSchools) && count($availableSchools) > 1)
+                                            <button type="button" class="btn btn-sm btn-outline" onclick="deleteSchool({{ $item->id }}, '{{ addslashes($item->name) }}')" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Hapus Satuan Pendidikan">
+                                                <i class='bx bx-trash'></i>
+                                            </button>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -3819,6 +3838,172 @@
     </div>
 </div>
 
+<!-- MODAL: Edit Satuan Pendidikan Dapodik -->
+<div class="vx-modal-backdrop modal-backdrop" id="modalEditSchool">
+    <div class="vx-modal modal-dialog" style="max-width: 800px;">
+        <div class="vx-modal-header modal-title-bar">
+            <h3 class="vx-modal-title">
+                <span class="modal-title-icon"><i class='bx bxs-edit'></i></span>
+                Edit Satuan Pendidikan (<span id="editSchoolTitleName">Memuat...</span>)
+            </h3>
+            <button class="vx-modal-close close-btn" onclick="closeModal('modalEditSchool')">&times;</button>
+        </div>
+        <form id="formEditSchool" onsubmit="submitEditSchool(event)">
+            <input type="hidden" id="editSchoolId" name="id" value="">
+            <div class="vx-modal-body modal-content" style="max-height: 75vh; overflow-y: auto;">
+                <!-- Step 1: Identitas Pokok Dapodik -->
+                <div style="font-weight: 700; font-size: 0.85rem; color: var(--vx-primary); margin-bottom: 0.6rem; border-bottom: 1px solid var(--vx-border-light); padding-bottom: 0.3rem;">
+                    1. IDENTITAS UTAMA PENDIDIKAN
+                </div>
+                <div class="vx-form-grid form-grid-2">
+                    <div class="form-row span-2">
+                        <label class="vx-label">Nama Satuan Pendidikan *</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_name" name="name" required>
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">NPSN (8 Digit) *</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_npsn" name="npsn" maxlength="8" required>
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Bentuk Pendidikan (Jenjang) *</label>
+                        <select class="vx-input form-input-clean" id="edit_level" name="level" required>
+                            <option value="SD">SD (Sekolah Dasar)</option>
+                            <option value="SMP">SMP (Sekolah Menengah Pertama)</option>
+                            <option value="SMA">SMA (Sekolah Menengah Atas)</option>
+                            <option value="SMK">SMK (Sekolah Menengah Kejuruan)</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Status Sekolah *</label>
+                        <select class="vx-input form-input-clean" id="edit_school_status" name="school_status" required>
+                            <option value="Negeri">Negeri</option>
+                            <option value="Swasta">Swasta</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Akreditasi</label>
+                        <select class="vx-input form-input-clean" id="edit_accreditation" name="accreditation">
+                            <option value="A">A (Unggul)</option>
+                            <option value="B">B (Baik)</option>
+                            <option value="C">C (Cukup)</option>
+                            <option value="Belum Terakreditasi">Belum Terakreditasi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Step 2: Legalitas & Perizinan -->
+                <div style="font-weight: 700; font-size: 0.85rem; color: var(--vx-primary); margin: 1rem 0 0.6rem; border-bottom: 1px solid var(--vx-border-light); padding-bottom: 0.3rem;">
+                    2. LEGALITAS, IZIN OPERASIONAL & PERPAJAKAN
+                </div>
+                <div class="vx-form-grid form-grid-2">
+                    <div class="form-row">
+                        <label class="vx-label">Nomor SK Pendirian</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_establishment_decree" name="establishment_decree">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Tanggal SK Pendirian</label>
+                        <input type="date" class="vx-input form-input-clean" id="edit_establishment_date" name="establishment_date">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Nomor SK Izin Operasional</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_operational_license_decree" name="operational_license_decree">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Tanggal SK Izin Operasional</label>
+                        <input type="date" class="vx-input form-input-clean" id="edit_operational_license_date" name="operational_license_date">
+                    </div>
+                    <div class="form-row span-2">
+                        <label class="vx-label">NPWP Satuan Pendidikan</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_tax_number" name="tax_number">
+                    </div>
+                </div>
+
+                <!-- Step 3: Alamat & Wilayah Dapodik -->
+                <div style="font-weight: 700; font-size: 0.85rem; color: var(--vx-primary); margin: 1rem 0 0.6rem; border-bottom: 1px solid var(--vx-border-light); padding-bottom: 0.3rem;">
+                    3. ALAMAT & TITIK KOORDINAT SPASIAL (GPS)
+                </div>
+                <div class="vx-form-grid form-grid-2">
+                    <div class="form-row span-2">
+                        <label class="vx-label">Alamat Jalan / Gedung *</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_address" name="address" required>
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">RT / RW</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_rt_rw" name="rt_rw">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Nama Dusun / Lingkungan</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_sub_village" name="sub_village">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Desa / Kelurahan</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_village" name="village">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Kecamatan</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_subdistrict" name="subdistrict">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Kabupaten / Kota</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_city" name="city">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Provinsi</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_province" name="province">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Kode Pos</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_postal_code" name="postal_code">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Lintang (Latitude GPS)</label>
+                        <input type="number" step="any" class="vx-input form-input-clean" id="edit_latitude" name="latitude">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Bujur (Longitude GPS)</label>
+                        <input type="number" step="any" class="vx-input form-input-clean" id="edit_longitude" name="longitude">
+                    </div>
+                </div>
+
+                <!-- Step 4: Kepala Sekolah & Kontak Resmi -->
+                <div style="font-weight: 700; font-size: 0.85rem; color: var(--vx-primary); margin: 1rem 0 0.6rem; border-bottom: 1px solid var(--vx-border-light); padding-bottom: 0.3rem;">
+                    4. PIMPINAN SEKOLAH & KONTAK RESMI
+                </div>
+                <div class="vx-form-grid form-grid-2">
+                    <div class="form-row">
+                        <label class="vx-label">Nama Kepala Sekolah Lengkap</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_principal_name" name="principal_name">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">NIP Kepala Sekolah</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_principal_nip" name="principal_nip">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Nomor Telepon Sekolah</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_phone" name="phone">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Nomor Fax</label>
+                        <input type="text" class="vx-input form-input-clean" id="edit_fax" name="fax">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Email Resmi Sekolah</label>
+                        <input type="email" class="vx-input form-input-clean" id="edit_email" name="email">
+                    </div>
+                    <div class="form-row">
+                        <label class="vx-label">Website Resmi</label>
+                        <input type="url" class="vx-input form-input-clean" id="edit_website" name="website">
+                    </div>
+                </div>
+            </div>
+            <div class="vx-modal-footer modal-bottom">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modalEditSchool')">Batal</button>
+                <button type="submit" id="btnSubmitEditSchool" class="btn btn-primary"><i class='bx bx-save'></i> Simpan Perubahan Profil</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- MODAL: Tambah Rombel (Kelas) -->
 <div class="vx-modal-backdrop modal-backdrop" id="modalAddClass">
     <div class="vx-modal modal-dialog" style="max-width: 680px;">
@@ -5775,6 +5960,122 @@
                 vxShowToast(errMsg, 'error');
             }
         } catch (err) { vxShowToast(err.message, 'error'); }
+    }
+
+    // --- EDIT & DELETE SATUAN PENDIDIKAN ---
+    async function openModalEditSchool(schoolId) {
+        try {
+            const res = await fetch('/api/v1/schools/' + schoolId, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const result = await res.json();
+            if (!res.ok || !result.success || !result.data) {
+                vxShowToast(result.message || 'Gagal mengambil detail satuan pendidikan.', 'error');
+                return;
+            }
+
+            const s = result.data;
+            document.getElementById('editSchoolId').value = s.id;
+            document.getElementById('editSchoolTitleName').textContent = s.name || 'Satuan Pendidikan';
+
+            document.getElementById('edit_name').value = s.name || '';
+            document.getElementById('edit_npsn').value = s.npsn || '';
+            document.getElementById('edit_level').value = s.level || 'SMA';
+            document.getElementById('edit_school_status').value = s.school_status || 'Negeri';
+            document.getElementById('edit_accreditation').value = s.accreditation || 'A';
+
+            document.getElementById('edit_establishment_decree').value = s.establishment_decree || '';
+            document.getElementById('edit_establishment_date').value = s.establishment_date ? s.establishment_date.substring(0, 10) : '';
+            document.getElementById('edit_operational_license_decree').value = s.operational_license_decree || '';
+            document.getElementById('edit_operational_license_date').value = s.operational_license_date ? s.operational_license_date.substring(0, 10) : '';
+            document.getElementById('edit_tax_number').value = s.tax_number || '';
+
+            document.getElementById('edit_address').value = s.address || '';
+            document.getElementById('edit_rt_rw').value = s.rt_rw || '';
+            document.getElementById('edit_sub_village').value = s.sub_village || '';
+            document.getElementById('edit_village').value = s.village || '';
+            document.getElementById('edit_subdistrict').value = s.subdistrict || '';
+            document.getElementById('edit_city').value = s.city || '';
+            document.getElementById('edit_province').value = s.province || '';
+            document.getElementById('edit_postal_code').value = s.postal_code || '';
+            document.getElementById('edit_latitude').value = s.latitude || '';
+            document.getElementById('edit_longitude').value = s.longitude || '';
+
+            document.getElementById('edit_principal_name').value = s.principal_name || '';
+            document.getElementById('edit_principal_nip').value = s.principal_nip || '';
+            document.getElementById('edit_phone').value = s.phone || '';
+            document.getElementById('edit_fax').value = s.fax || '';
+            document.getElementById('edit_email').value = s.email || '';
+            document.getElementById('edit_website').value = s.website || '';
+
+            openModal('modalEditSchool');
+        } catch (err) {
+            vxShowToast('Kesalahan koneksi saat memuat data sekolah: ' + err.message, 'error');
+        }
+    }
+
+    async function submitEditSchool(e) {
+        e.preventDefault();
+        const form = e.target;
+        const schoolId = document.getElementById('editSchoolId').value;
+        const btnSubmit = document.getElementById('btnSubmitEditSchool');
+        const origBtnText = btnSubmit.innerHTML;
+
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Menyimpan...";
+
+        const payload = Object.fromEntries(new FormData(form).entries());
+        if (payload.latitude) payload.latitude = parseFloat(payload.latitude);
+        if (payload.longitude) payload.longitude = parseFloat(payload.longitude);
+
+        try {
+            const res = await fetch('/api/v1/schools/' + schoolId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (res.ok && result.success) {
+                vxShowToast(result.message || 'Data Satuan Pendidikan berhasil diperbarui!', 'success');
+                closeModal('modalEditSchool');
+                setTimeout(() => location.reload(), 700);
+            } else {
+                let errMsg = result.message || 'Gagal memperbarui satuan pendidikan.';
+                if (result.errors) {
+                    const firstErr = Object.values(result.errors)[0];
+                    if (firstErr) errMsg = Array.isArray(firstErr) ? firstErr[0] : firstErr;
+                }
+                vxShowToast(errMsg, 'error');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origBtnText;
+            }
+        } catch (err) {
+            vxShowToast('Terjadi kesalahan server: ' + err.message, 'error');
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = origBtnText;
+        }
+    }
+
+    async function deleteSchool(schoolId, schoolName) {
+        if (!confirm(`Apakah Anda yakin ingin menghapus Satuan Pendidikan "${schoolName}"?\n\nPERINGATAN: Seluruh data rombel, siswa, jadwal, dan rekaman presensi yang berada di bawah satuan pendidikan ini akan ikut terhapus secara permanen.`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/v1/schools/' + schoolId, {
+                method: 'DELETE',
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN }
+            });
+            const result = await res.json();
+            if (res.ok && result.success) {
+                vxShowToast(result.message || 'Satuan pendidikan berhasil dihapus.', 'success');
+                setTimeout(() => location.reload(), 700);
+            } else {
+                vxShowToast(result.message || 'Gagal menghapus satuan pendidikan.', 'error');
+            }
+        } catch (err) {
+            vxShowToast('Kesalahan server saat menghapus: ' + err.message, 'error');
+        }
     }
 
     // --- ROMBEL (KELAS) HANDLERS ---

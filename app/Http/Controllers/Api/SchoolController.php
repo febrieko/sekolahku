@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\School;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class SchoolController extends Controller
@@ -15,9 +17,17 @@ class SchoolController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $schools = School::withCount(['classes', 'students', 'users'])
-            ->orderBy('id')
-            ->get();
+        /** @var User|null $user */
+        $user = Auth::user() ?? $request->user();
+
+        $query = School::withCount(['classes', 'students', 'users']);
+
+        // Jika bukan Super Admin (mis: Admin Sekolah / Guru), batasi hanya melihat sekolah tempatnya dienrol
+        if ($user && ! $user->isSuperAdmin()) {
+            $query->where('id', $user->school_id ?? 1);
+        }
+
+        $schools = $query->orderBy('id')->get();
 
         return response()->json([
             'success' => true,
@@ -36,7 +46,7 @@ class SchoolController extends Controller
         if (!$school) {
             return response()->json([
                 'success' => false,
-                'message' => 'Sekolah tidak ditemukan.',
+                'message' => 'Satuan pendidikan tidak ditemukan.',
             ], 404);
         }
 
@@ -47,10 +57,21 @@ class SchoolController extends Controller
     }
 
     /**
-     * Store a new school with Dapodik standard fields.
+     * Store a new school with Dapodik standard fields (Super Admin only).
      */
     public function store(Request $request): JsonResponse
     {
+        /** @var User|null $user */
+        $user = Auth::user() ?? $request->user();
+
+        // Hanya Super Admin yang berwenang menambah satuan pendidikan baru
+        if (! $user || ! $user->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak: Hanya Super Administrator yang berwenang menambah Satuan Pendidikan baru.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'npsn' => 'required|string|size:8|unique:schools,npsn',
@@ -90,28 +111,49 @@ class SchoolController extends Controller
 
         $school = School::create($validated);
 
-        // Optionally switch session to this newly created school
+        // Alihkan sesi aktif ke sekolah baru ini
         session(['active_school_id' => $school->id]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Data Satuan Pendidikan (Sekolah) Dapodik berhasil didaftarkan.',
+            'message' => 'Satuan Pendidikan (Sekolah) Dapodik berhasil didaftarkan.',
             'data' => $school,
         ], 201);
     }
 
     /**
      * Update school details.
+     * Super Admin can update any school; School Admin can only update their enrolled school.
      */
     public function update(Request $request, $id): JsonResponse
     {
+        /** @var User|null $user */
+        $user = Auth::user() ?? $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Silakan masuk ke akun Anda terlebih dahulu.',
+            ], 401);
+        }
+
         $school = School::find($id);
 
         if (!$school) {
             return response()->json([
                 'success' => false,
-                'message' => 'Sekolah tidak ditemukan.',
+                'message' => 'Satuan pendidikan tidak ditemukan.',
             ], 404);
+        }
+
+        // Jika bukan Super Admin (Admin Sekolah), pastikan hanya bisa mengedit sekolah tempat ia dienrol
+        if (! $user->isSuperAdmin()) {
+            if (! $user->isSchoolAdmin() || (int) $user->school_id !== (int) $school->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses ditolak: Anda hanya berwenang memperbarui data Satuan Pendidikan yang telah dienrol.',
+                ], 403);
+            }
         }
 
         $validated = $request->validate([
@@ -147,23 +189,81 @@ class SchoolController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Data Dapodik Sekolah berhasil diperbarui.',
+            'message' => 'Data Dapodik Satuan Pendidikan berhasil diperbarui.',
             'data' => $school,
         ]);
     }
 
     /**
-     * Switch active school tenant in session.
+     * Delete a school (Super Admin only).
+     */
+    public function destroy(Request $request, $id): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::user() ?? $request->user();
+
+        // Hanya Super Admin yang berwenang menghapus satuan pendidikan
+        if (! $user || ! $user->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak: Hanya Super Administrator yang berwenang menghapus Satuan Pendidikan.',
+            ], 403);
+        }
+
+        $school = School::find($id);
+
+        if (!$school) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Satuan pendidikan tidak ditemukan.',
+            ], 404);
+        }
+
+        // Cegah penghapusan jika ini adalah satu-satunya sekolah di sistem
+        if (School::count() <= 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus: Minimal harus ada 1 Satuan Pendidikan di dalam sistem.',
+            ], 422);
+        }
+
+        $schoolName = $school->name;
+        $school->delete();
+
+        // Jika session aktif mengarah ke sekolah yang dihapus, switch ke sekolah pertama yang tersisa
+        if (session('active_school_id') == $id) {
+            $fallback = School::first();
+            session(['active_school_id' => $fallback?->id]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Satuan Pendidikan \"{$schoolName}\" berhasil dihapus dari sistem.",
+        ]);
+    }
+
+    /**
+     * Switch active school tenant in session (Super Admin only).
      */
     public function switchActive(Request $request): JsonResponse
     {
+        /** @var User|null $user */
+        $user = Auth::user() ?? $request->user();
+
+        if ($user && ! $user->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak: Anda hanya berwenang mengelola data pada satuan pendidikan tempat Anda dienrol.',
+            ], 403);
+        }
+
         $schoolId = $request->input('school_id');
         $school = School::find($schoolId);
 
         if (!$school) {
             return response()->json([
                 'success' => false,
-                'message' => 'Sekolah tidak ditemukan.',
+                'message' => 'Satuan pendidikan tidak ditemukan.',
             ], 404);
         }
 
