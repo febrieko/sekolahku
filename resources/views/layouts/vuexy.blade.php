@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>@yield('title', 'Dashboard') — Apex Admin Sekolahku</title>
-    <meta name="description" content="@yield('description', 'Apex Admin — Sistem Manajemen Sekolah Terpadu Berbasis shadcn/ui & Instrument Sans')" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <title>@yield('title', 'Dashboard') — {{ $appBranding['app_name'] ?? 'Sekolahku' }}</title>
+    <meta name="description" content="@yield('description', 'Sistem Manajemen Sekolah Terpadu')" />
+    <link rel="icon" type="image/x-icon" href="{{ !empty($appBranding['app_logo']) ? $appBranding['app_logo'] : '/favicon.ico' }}" />
 
     <!-- Admindek Instant Theme & Preset Detection (Zero-Flicker) -->
     <script>
@@ -414,6 +414,13 @@
             flex-shrink: 0;
             box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
             transition: transform 0.2s ease;
+            overflow: hidden;
+        }
+        .brand-icon-apex img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: inherit;
         }
         .brand-link-apex:hover .brand-icon-apex {
             transform: scale(1.06) rotate(3deg);
@@ -1659,11 +1666,17 @@
             <div class="sidebar-brand-box">
                 <a href="{{ route('admin.dashboard') }}" class="brand-link-apex">
                     <div class="brand-icon-apex">
-                        <i class='bx bxs-graduation'></i>
+                        @if(!empty($appBranding['app_logo']))
+                            <img src="{{ $appBranding['app_logo'] }}" alt="{{ $appBranding['app_name'] ?? 'Sekolahku' }}">
+                        @else
+                            <i class='bx bxs-graduation'></i>
+                        @endif
                     </div>
                     <div class="brand-name-apex">
-                        <span>Apex Sekolahku</span>
-                        <span class="brand-tag-apex">v2.0</span>
+                        <span>{{ $appBranding['app_name'] ?? 'Sekolahku' }}</span>
+                        @if(!empty($appBranding['app_tagline']))
+                            <span class="brand-tag-apex">{{ $appBranding['app_tagline'] }}</span>
+                        @endif
                     </div>
                 </a>
                 <button type="button" class="topbar-btn-icon" onclick="toggleApexSidebar()" title="Toggle Sidebar">
@@ -1796,6 +1809,15 @@
                         <span class="apex-nav-label">Enrol Satuan Pendidikan</span>
                     </div>
                     <span class="apex-nav-badge">Unit</span>
+                </a>
+                @endif
+                @if(Auth::check() && Auth::user()->isSuperAdmin())
+                <a href="{{ route('admin.settings.branding') }}" id="sidebar-nav-settings-branding" class="apex-nav-item {{ Request::routeIs('admin.settings.branding*') ? 'active' : '' }}">
+                    <div class="apex-nav-left">
+                        <i class='bx bx-palette apex-nav-icon' style="color: #F59E0B;"></i>
+                        <span class="apex-nav-label">Identitas & Branding</span>
+                    </div>
+                    <span class="apex-nav-badge" style="background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.25);">Super</span>
                 </a>
                 @endif
                 @if(Auth::check() && (in_array(Auth::user()->role, ['teacher', 'waka_kurikulum', 'waka_kesiswaan', 'waka_sarpras', 'waka_humas', 'waka_hubin']) || Auth::user()->isSchoolAdmin() || Auth::user()->isSuperAdmin()))

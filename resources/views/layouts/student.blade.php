@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>@yield('title', 'Portal Siswa — Sekolahku')</title>
+    <title>@yield('title', 'Portal Siswa — ' . ($appBranding['app_name'] ?? 'Sekolahku'))</title>
 
     <script>
         (function() {
@@ -516,9 +516,15 @@
         <aside class="std-sidebar" id="stdSidebar">
             <div class="std-brand-box">
                 <a href="{{ route('student.dashboard', $previewQuery) }}" class="std-brand-link">
-                    <div class="std-brand-icon"><i class='bx bxs-graduation'></i></div>
+                    <div class="std-brand-icon">
+                        @if(!empty($appBranding['app_logo']))
+                            <img src="{{ $appBranding['app_logo'] }}" alt="{{ $appBranding['app_name'] ?? 'Sekolahku' }}" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;">
+                        @else
+                            <i class='bx bxs-graduation'></i>
+                        @endif
+                    </div>
                     <div>
-                        <div style="line-height: 1.1;">Sekolahku</div>
+                        <div style="line-height: 1.1;">{{ $appBranding['app_name'] ?? 'Sekolahku' }}</div>
                         <span class="std-brand-pill">PORTAL SISWA</span>
                     </div>
                 </a>

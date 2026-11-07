@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminAppBrandingController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminDataMasterController;
 use App\Http\Controllers\AdminDisciplineController;
@@ -76,6 +77,14 @@ Route::prefix('admin')
             Route::get('/import/template/teachers', [\App\Http\Controllers\AdminBulkImportController::class, 'downloadTeacherTemplate'])->name('import.template.teachers');
             Route::post('/import/students', [\App\Http\Controllers\AdminBulkImportController::class, 'importStudents'])->name('import.students');
             Route::post('/import/teachers', [\App\Http\Controllers\AdminBulkImportController::class, 'importTeachers'])->name('import.teachers');
+        });
+
+        // Modul Pengaturan Aplikasi & Branding (Khusus Super Admin)
+        Route::middleware(['role:super_admin'])->group(function () {
+            Route::get('/settings/branding', [AdminAppBrandingController::class, 'index'])->name('settings.branding');
+            Route::post('/settings/branding', [AdminAppBrandingController::class, 'update'])->name('settings.branding.update');
+            Route::delete('/settings/branding/logo', [AdminAppBrandingController::class, 'removeLogo'])->name('settings.branding.remove-logo');
+            Route::post('/settings/branding/reset', [AdminAppBrandingController::class, 'resetDefaults'])->name('settings.branding.reset');
         });
 
         Route::post('/switch-school', [AdminDataMasterController::class, 'switchSchool'])->name('switch-school');

@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>Masuk — Portal Sekolahku</title>
+    <title>Masuk — {{ $appBranding['app_name'] ?? 'Sekolahku' }}</title>
     <meta name="description" content="Portal Masuk — Sistem Informasi Manajemen Sekolah Terpadu" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="{{ !empty($appBranding['app_logo']) ? $appBranding['app_logo'] : '/favicon.ico' }}" />
 
     <!-- Theme Detection (Apex Standard) -->
     <script>
@@ -278,10 +278,14 @@
     <div class="auth-container-apex">
         <a href="/" class="brand-header-apex">
             <div class="brand-icon-apex">
-                <i class='bx bxs-graduation'></i>
+                @if(!empty($appBranding['app_logo']))
+                    <img src="{{ $appBranding['app_logo'] }}" alt="{{ $appBranding['app_name'] ?? 'Sekolahku' }}" style="width: 100%; height: 100%; object-fit: contain; border-radius: inherit;">
+                @else
+                    <i class='bx bxs-graduation'></i>
+                @endif
             </div>
             <div>
-                <span class="brand-title-apex">Sekolahku</span>
+                <span class="brand-title-apex">{{ $appBranding['app_name'] ?? 'Sekolahku' }}</span>
             </div>
         </a>
 
@@ -336,7 +340,7 @@
         </form>
 
         <div class="auth-footer-tag">
-            <span>&copy; {{ date('Y') }} Sekolahku</span>
+            <span>&copy; {{ date('Y') }} {{ $appBranding['app_name'] ?? 'Sekolahku' }}</span>
             <span>Sistem Informasi Manajemen Sekolah Terintegrasi</span>
         </div>
     </div>

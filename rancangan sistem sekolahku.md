@@ -1,18 +1,16 @@
 # 📚 SEKOLAHKU — Rancangan Sistem Informasi Manajemen Sekolah Terintegrasi
 
-> **Versi Dokumen:** 2.8.0  
+> **Versi Dokumen:** 2.9.0  
 > **Tanggal:** 20 Oktober 2026  
-> **Diperbarui:** 5 November 2026 — **Modul Bulk Import Excel/CSV Pengguna (Siswa & GTK) & Autentikasi Multi-Identitas NISN**:
-> 1. **Bulk Import Siswa Berbasis Excel/CSV (`/admin/import/students`)**: Unggah masal data peserta didik dengan 14 kolom standar Dapodik (NISN, NIS, Nama, JK, Tempat/Tgl Lahir, Agama, Nama Rombel, Angkatan, NIK, Wali & No HP, Email opsional, Password opsional). Otomatis membuat akun login `users`, entitas `students`, dan riwayat kelas `student_class_histories` dengan pencocokan nama rombel cerdas.
-> 2. **Autentikasi Siswa Mandiri Menggunakan NISN**: Siswa tidak lagi dibebani kewajiban memiliki email pribadi; portal login (`/login`) mendukung multi-identitas di mana siswa dapat masuk cukup menggunakan NISN dan kata sandi, dengan fallback email `{nisn}@siswa.sekolahku.sch.id` secara transparan di backend.
-> 3. **Bulk Import GTK / Karyawan Berbasis Excel/CSV (`/admin/import/teachers`)**: Unggah masal guru dan tenaga kependidikan dengan deteksi cerdas tupoksi (Guru Mapel, Guru BK/Konselor, Staf TU, Bendahara, serta penugasan Waka Kurikulum/Kesiswaan/Sarpras/Humas/Hubin), lengkap dengan pembuatan akun pengguna terhubung dan nomor kontak.
-> 4. **Generator Template Excel Dinamis Berpetunjuk (`phpoffice/phpspreadsheet`)**: Unduh template `.xlsx` resmi dari sistem yang telah dilengkapi header terproteksi, format tanggal standar, serta *Sheet 2 (Petunjuk & Referensi)* berisi daftar kelas aktif sekolah dan kamus peran GTK.
-> 5. **Opsi Penanganan Duplikasi & Keamanan**: Opsi penanganan rekaman ganda (*Lewati duplikat* / *Perbarui data yang ada*) serta validasi keamanan berkas maksimal 10MB (`.xlsx`, `.xls`, `.csv`).
+> **Diperbarui:** 7 November 2026 — **Modul Manajemen Identitas & Branding Aplikasi (Khusus Super Admin)**:
+> 1. **Kustomisasi Logo, Nama Aplikasi, & Tagline (`/admin/settings/branding`)**: Pengaturan identitas visual aplikasi yang dinamis tersimpan di basis data (`app_settings`) dan di-cache secara otomatis demi performa tinggi.
+> 2. **Refleksi Real-time & Global**: Perubahan nama aplikasi dan logo langsung terfleksikan secara menyeluruh pada Sidebar Header (`layouts.vuexy`), Title Bar Browser, Favicon, Halaman Login (`auth.login`), serta Sidebar Portal Siswa (`layouts.student`).
+> 3. **Pratinjau Langsung (Live Preview Mockup)**: Antarmuka Super Admin dilengkapi simulasi sidebar header real-time saat mengetik nama aplikasi atau memilih berkas logo baru.
+> 4. **Dukungan Format Logo & Fitur Reset Standar**: Mendukung PNG, JPG, SVG, WebP hingga 2MB, penyimpanan otomatis ke storage public, fitur hapus logo custom kembali ke ikon standar, serta 1-click Reset ke Standar Sistem.
 > 
-> *Riwayat Pembaruan Sebelumnya (v2.7.0 - 4 November 2026)*:
-> - Dinamisasi Kelompok Mata Pelajaran (`curriculum_subject_groups`) per kurikulum operasional.
-> - Presets 1-click template kelompok standar (*Merdeka*, *K13*, *Kemenag*, *Pesantren*).
-> - Modal interaktif struktur kurikulum & penyelarasan form pemetaan otomatis.  
+> *Riwayat Pembaruan Sebelumnya (v2.8.0 - 5 November 2026)*:
+> - Modul Bulk Import Excel/CSV Pengguna (Siswa & GTK) & Autentikasi Multi-Identitas NISN.
+> - Generator Template Excel Dinamis Berpetunjuk (`phpoffice/phpspreadsheet`).  
 > **Status:** Draf Aktif  
 > **Referensi:** [simeela.com](https://simeela.com/)
 
